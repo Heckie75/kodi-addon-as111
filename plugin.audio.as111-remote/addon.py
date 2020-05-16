@@ -32,7 +32,7 @@ def _get_entries():
             "path" : "down",
             "name" : "Volume down",
             "icon" : "icon_sound_down",
-            "exec" : ["vol", "-"]
+            "exec" : ["vol", "-1"]
         },
         {
             "path" : "mute",
