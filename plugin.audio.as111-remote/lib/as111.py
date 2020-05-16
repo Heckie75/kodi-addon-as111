@@ -1,0 +1,1 @@
+/home/heckie/github-heckie75/sync-philips-as111/as111.py
