@@ -1,10 +1,10 @@
 #!/usr/bin/python3
+import json
 import os
 import os.path
-import sys
-
-import urlparse
 import subprocess
+import sys
+import urlparse
 
 import xbmcgui
 import xbmcplugin
@@ -19,9 +19,14 @@ addon_dir = xbmc.translatePath( settings.getAddonInfo('path') )
 
 
 
-def _get_entries():
+def _get_entries(alias, vol):
 
     entries = [
+        {
+            "path" : "status",
+            "name" : "%s: Volume is %s" % (alias, vol if vol != 0 else "muted"),
+            "icon" : "icon_info"
+        },
         {
             "path" : "up",
             "name" : "Volume up",
@@ -36,7 +41,7 @@ def _get_entries():
         },
         {
             "path" : "mute",
-            "name" : "Mute",
+            "name" : "%s" % "Mute" if vol != 0 else "[COLOR orange]Mute[/COLOR]",
             "icon" : "icon_mute",
             "exec" : ["mute"]
         }
@@ -51,10 +56,15 @@ def _get_entries():
     _range = range(_min, _max)
     for i in _range:
 
+        if vol == i:
+            name ="[COLOR orange]Volume %i[/COLOR]" % i
+        else:
+            name ="Volume %i" % i
+
         entries += [
             {
                 "path" : str(i),
-                "name" : "Volume %i" % i,
+                "name" : name,
                 "icon" : icons[int(((i - _min) / icon_div))],
                 "exec" : ["vol", str(i)]
             }
@@ -65,9 +75,24 @@ def _get_entries():
 
 
 
-def _build_menu():
+def _parse_status(_json):
 
-    entries = _get_entries()
+    status = json.loads(_json)
+    alias = status["alias"] if status["alias"] != "" else status["name"]
+    vol = status["volume"]
+
+    return alias, vol
+
+
+
+
+def _build_menu(alias = None, vol = None):
+
+    if vol == None:
+        out = _exec_as111([ "json" ])
+        alias, vol = _parse_status(out)
+
+    entries = _get_entries(alias, vol)
     for entry in entries:
         _add_list_item(entry)
 
@@ -93,8 +118,10 @@ def _add_list_item(entry):
     item_path = "/" + entry["path"]
     if "exec" in entry:
         param_string = _build_param_string(
-            param = "exec", 
+            param = "exec",
             values = entry["exec"])
+    else:
+        param_string = ""
 
     icon_file = os.path.join(addon_dir, "resources", "assets", entry["icon"] + ".png")
     li = xbmcgui.ListItem(entry["name"], iconImage=icon_file)
@@ -130,6 +157,11 @@ if __name__ == "__main__":
     url_params = urlparse.parse_qs(sys.argv[2][1:])
 
     if "exec" in url_params:
-        _exec_as111(url_params["exec"])
+        out = _exec_as111(url_params["exec"] + [ "json" ])
+        alias, vol = _parse_status(out)
+        xbmc.executebuiltin('Container.Update("plugin://%s/?alias=%s&vol=%i","update")'
+            % (__PLUGIN_ID__, alias, vol))
+    elif "vol" in url_params:
+        _build_menu(url_params["alias"][0], int(url_params["vol"][0]))
     else:
         _build_menu()
