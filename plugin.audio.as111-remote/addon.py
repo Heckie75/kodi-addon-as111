@@ -105,7 +105,7 @@ def _build_param_string(param, values):
 
     current = ""
     for v in values:
-        current += "?" if len(current) == 0 else "&"
+        current += "|" if len(current) == 0 else "&"
         current += param + "=" + v
 
     return current
@@ -152,14 +152,28 @@ def _exec_as111(params):
 
 
 
+def _parse_url(url):
+
+    i = url.find("|")
+    if i < 0:
+        return []
+
+    param_string = url[i+1:]
+    url_params = urlparse.parse_qs(param_string)
+
+    return url_params
+
+
+
+
 if __name__ == "__main__":
 
-    url_params = urlparse.parse_qs(sys.argv[2][1:])
+    url_params = _parse_url(sys.argv[0])
 
     if "exec" in url_params:
         out = _exec_as111(url_params["exec"] + [ "json" ])
         alias, vol = _parse_status(out)
-        xbmc.executebuiltin('Container.Update("plugin://%s/?alias=%s&vol=%i","update")'
+        xbmc.executebuiltin('Container.Refresh("plugin://%s/|alias=%s&vol=%i")'
             % (__PLUGIN_ID__, alias, vol))
     elif "vol" in url_params:
         _build_menu(url_params["alias"][0], int(url_params["vol"][0]))
