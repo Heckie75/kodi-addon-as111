@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<settings>
-  <category label="Sound controls">
-    <setting label="Volume" type="lsep" />
-    <setting label="Min. Volume" type="slider" id="vol_min" default="5" range="0,1,10" option="int" />
-    <setting label="Max. Volume" type="slider" id="vol_max" default="15" range="11,1,32" option="int" />
-  </category>
-</settings>
